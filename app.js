@@ -15,29 +15,38 @@ app.get("/", (req, res) => {
   res.send("This is chat Server..");
 });
 let users = [];
-let allMsg = []
+let allMsg = {}
 
 io.on("connection", (socket) => {
   console.log("connect : ", socket.id);
-  socket.on("enter", (username) => {
-    let isNameExist = users.findIndex( el => el.name === username) !== -1
-    if(!isNameExist)
-      users.push({id: socket.id, name: username});
+  socket.on("enter", (data) => {
+    let isNameExist = users.findIndex( el => el.name === data.username) !== -1
+    if(isNameExist)
+      return alert('Please choose another name')
+    socket.join(data.room)
+    users.push({id: socket.id, name: data.username, room: data.room});
+    allMsg[data.room] = allMsg[data.room] ? allMsg[data.room] : []
     console.log(users);
+    console.log(allMsg)
+    io.to(data.room).emit("getMessage", allMsg[data.room])
+    // console.log('----------------')
+    // console.log(socket.rooms)
   });
+
   socket.on("disconnect", () => {
     console.log("Disconnect : ", socket.id);
     let idx = users.findIndex(el => el.id === socket.id)
     users.splice(idx, 1)
     if(users.length === 0)
-      allMsg = []
+      allMsg = {}
     console.log(users)
   });
-  socket.on("sendMessage", msg => {
+
+  socket.on("sendMessage", ({msg, room}) => {
     // console.log( socket.id,' : ', msg)
-    allMsg.push({id: socket.id, msg : msg})
-    console.log(allMsg)
-    io.emit("getMessage", allMsg)
+    allMsg[room].push({id: socket.id, msg : msg})
+    console.log(allMsg[room])
+    io.to(room).emit("getMessage", allMsg[room])
   })
 });
 
