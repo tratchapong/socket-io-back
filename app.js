@@ -18,7 +18,7 @@ let users = [];
 let allMsg = {}
 
 io.on("connection", (socket) => {
-  console.log("connect : ", socket.id);
+  // console.log("connect : ", socket.id);
   socket.on("enter", (data) => {
     let isNameExist = users.findIndex( el => el.name === data.username) !== -1
     if(isNameExist)
@@ -36,18 +36,23 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("Disconnect : ", socket.id);
     let idx = users.findIndex(el => el.id === socket.id)
+    let theRoom = users[idx].room
     users.splice(idx, 1)
-    if(users.length === 0)
-      allMsg = {}
+    let roomInUse = users.some(el => el.room === theRoom)
+    if(!roomInUse)
+      allMsg[theRoom] = []
+    console.log('After disconnect')
+    console.log(allMsg)
     console.log(users)
   });
 
-  socket.on("sendMessage", ({msg, room}) => {
+  socket.on("sendMessage", ({username, msg, room}) => {
     // console.log( socket.id,' : ', msg)
-    allMsg[room].push({id: socket.id, msg : msg})
-    console.log(allMsg[room])
+    allMsg[room].push({id: socket.id,username, msg })
+    // console.log(allMsg[room])
     io.to(room).emit("getMessage", allMsg[room])
   })
+
 });
 
 server.listen(8080, () => console.log("Server on 8080..."));
