@@ -42,9 +42,9 @@ io.on("connection", (socket) => {
     console.log(users)
   });
 
-  socket.on("sendMessage", ({msg, room}) => {
+  socket.on("sendMessage", ({username, msg, room}) => {
     // console.log( socket.id,' : ', msg)
-    allMsg[room].push({id: socket.id, msg : msg})
+    allMsg[room].push({id: socket.id,username, msg })
     console.log(allMsg[room])
     io.to(room).emit("getMessage", allMsg[room])
   })
